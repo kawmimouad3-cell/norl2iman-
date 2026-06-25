@@ -231,6 +231,11 @@ fun SearchScreen(
                     )
                 )
 
+                // Trigger search when query changes
+                LaunchedEffect(query) {
+                    viewModel.search(query)
+                }
+
                 if (query.isEmpty()) {
                     // Suggestions View when search is empty
                     SuggestionsList(language = language, onSuggestionClick = { query = it })
@@ -265,17 +270,17 @@ fun SearchScreen(
                     }
 
                     // Searching local Mushaf in-memory data
-                    val pages = uiState.pages
+                    // Searching logic moved to ViewModel
                     val normQuery = query.trim().normalizeArabic()
                     
-                    // Filter chapters
+                    // Filter chapters (cached in state)
                     val filteredChapters = if (selectedFilter == "الكل" || selectedFilter == "السور") {
                         uiState.chapters.filter { it.name.normalizeArabic().contains(normQuery, ignoreCase = true) }
                     } else emptyList()
 
-                    // Filter verses
+                    // Filtered verses come from viewModel search
                     val filteredVerses = if (selectedFilter == "الكل" || selectedFilter == "الآيات") {
-                        pages.flatMap { it.verses }.filter { it.text.normalizeArabic().contains(normQuery, ignoreCase = true) }
+                        uiState.searchResults
                     } else emptyList()
 
                     if (filteredChapters.isEmpty() && filteredVerses.isEmpty()) {
@@ -384,7 +389,7 @@ fun SearchScreen(
                                     )
                                 }
                                 items(filteredVerses) { verse ->
-                                    val matchedPage = pages.find { page -> page.verses.any { it.id == verse.id } }?.pageNumber ?: 1
+                                    val matchedPage = verse.pageNumber
                                     
                                     Card(
                                         modifier = Modifier.fillMaxWidth(),

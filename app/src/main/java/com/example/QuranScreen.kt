@@ -196,6 +196,7 @@ fun ChapterScreen(
     onNavigateUp: () -> Unit,
     viewModel: QuranViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val allPages by viewModel.allPages.collectAsState()
 
     val pagerState = rememberPagerState(
@@ -316,8 +317,8 @@ fun ChapterScreen(
         }
         playerRef.value = null
 
-        val surahPadded = String.format("%03d", verse.surahNumber)
-        val ayahPadded = String.format("%03d", verse.numberInSurah)
+        val surahPadded = String.format("%03d", playingVerse.surahNumber)
+        val ayahPadded = String.format("%03d", playingVerse.numberInSurah)
         val filename = "$surahPadded$ayahPadded.mp3"
 
         val everyAyahFolder = when (selectedReciter) {
@@ -360,8 +361,8 @@ fun ChapterScreen(
                         isPlaying = true
                         
                         // Auto scroll to the page matching this verse!
-                        val pageIdx = allPages.indexOfFirst { p -> p.verses.any { it.id == verseId } }
-                        if (pageIdx != -1 && pageIdx != pagerState.currentPage) {
+                        val pageIdx = playingVerse.pageNumber - 1
+                        if (pageIdx >= 0 && pageIdx != pagerState.currentPage) {
                             scope.launch {
                                 pagerState.animateScrollToPage(pageIdx)
                             }
@@ -764,10 +765,9 @@ fun ChapterScreen(
                             }
                         }
                     }
-                }
-            }
-        }
-                    
+                } // End of HorizontalPager
+            } // End of Column
+
                     // OUR STICKY BOTTOM PLAYER BAR OVERLAY
                     if (activePlayingVerseId != null) {
                         val playingVerse = allPages.values.flatMap { it.verses }.find { it.id == activePlayingVerseId }
@@ -1225,7 +1225,7 @@ fun ChapterScreen(
         else Text("جارٍ التحميل...", color = textPageColor)
     }
 }
-}
+    }
 }
 
 // Key data model for Surahs present on page to avoid duplicates

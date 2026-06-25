@@ -18,7 +18,8 @@ data class ChapterMetadata(
 data class QuranUiState(
     val isLoading: Boolean = true,
     val chapters: List<ChapterMetadata> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val searchResults: List<Verse> = emptyList()
 )
 
 class QuranViewModel(
@@ -73,5 +74,16 @@ class QuranViewModel(
 
     suspend fun fetchVerseTranslationAndTafsir(verseId: Int): Result<Triple<String, String, String>> {
         return repository.getVerseTranslationAndTafsir(verseId)
+    }
+
+    fun search(query: String) {
+        if (query.trim().length < 2) {
+            _uiState.update { it.copy(searchResults = emptyList()) }
+            return
+        }
+        viewModelScope.launch {
+            val results = repository.searchQuran(query.trim())
+            _uiState.update { it.copy(searchResults = results) }
+        }
     }
 }

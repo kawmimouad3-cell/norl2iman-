@@ -270,5 +270,22 @@ class QuranRepository(private val context: Context) {
         } catch (e: Exception) {
             null
         }
+    suspend fun searchQuran(query: String): List<Verse> = withContext(Dispatchers.IO) {
+        val results = mutableListOf<Verse>()
+        try {
+            val chapterIndex = loadChapterIndex()
+            // To make search reasonably fast, we iterate through pages.
+            // In a production app, we'd use a FTS database.
+            for (p in 1..604) {
+                try {
+                    val page = parseQcfPage(p, chapterIndex)
+                    val matching = page.verses.filter { it.text.contains(query, ignoreCase = true) }
+                    results.addAll(matching)
+                    // Cap results for performance
+                    if (results.size > 50) break
+                } catch (e: Exception) {}
+            }
+        } catch (e: Exception) {}
+        results
     }
 }
