@@ -1,0 +1,6 @@
+{
+  "name": "Quran",
+  "description": "A beautiful Islamic app with prayer times, Quran reading, and more.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
