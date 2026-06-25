@@ -196,38 +196,37 @@ fun ChapterScreen(
     onNavigateUp: () -> Unit,
     viewModel: QuranViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-
-    // Find the correct page index (pageNumber - 1 typically, but to be robust, find index)
-    // Actually uiState.pages is sorted so index is pageNumber - 1.
-    val initialPageIndex = if (uiState.pages.isNotEmpty()) {
-        uiState.pages.indexOfFirst { it.pageNumber == chapterId }.coerceAtLeast(0)
-    } else 0
+    val allPages by viewModel.allPages.collectAsState()
 
     val pagerState = rememberPagerState(
-        initialPage = initialPageIndex,
-        pageCount = { uiState.pages.size }
+        initialPage = (chapterId - 1).coerceIn(0, 603),
+        pageCount = { 604 } // Full Mushaf size
     )
+
+    // Load visible and neighboring pages
+    LaunchedEffect(pagerState.currentPage) {
+        viewModel.loadPageIfNeeded(pagerState.currentPage + 1)
+        if (pagerState.currentPage > 0) viewModel.loadPageIfNeeded(pagerState.currentPage)
+        if (pagerState.currentPage < 603) viewModel.loadPageIfNeeded(pagerState.currentPage + 2)
+    }
 
     val context = LocalContext.current
 
     // Automatically persistent Last Read page and first verse info as pages are scrolled
-    LaunchedEffect(pagerState.currentPage, uiState.pages) {
-        if (uiState.pages.isNotEmpty()) {
-            val currentPageIndex = pagerState.currentPage
-            if (currentPageIndex in uiState.pages.indices) {
-                val page = uiState.pages[currentPageIndex]
-                val firstVerse = page.verses.firstOrNull()
-                if (firstVerse != null) {
-                    val prefs = context.getSharedPreferences("quran_prefs", Context.MODE_PRIVATE)
-                    prefs.edit()
-                        .putInt("last_read_page", page.pageNumber)
-                        .putString("last_read_surah", firstVerse.surahName)
-                        .putInt("last_read_verse", firstVerse.numberInSurah)
-                        .putString("last_read_text", firstVerse.text)
-                        .putLong("last_read_time", System.currentTimeMillis())
-                        .apply()
-                }
+    LaunchedEffect(pagerState.currentPage, allPages) {
+        val pageNumber = pagerState.currentPage + 1
+        val page = allPages[pageNumber]
+        if (page != null) {
+            val firstVerse = page.verses.firstOrNull()
+            if (firstVerse != null) {
+                val prefs = context.getSharedPreferences("quran_prefs", Context.MODE_PRIVATE)
+                prefs.edit()
+                    .putInt("last_read_page", page.pageNumber)
+                    .putString("last_read_surah", firstVerse.surahName)
+                    .putInt("last_read_verse", firstVerse.numberInSurah)
+                    .putString("last_read_text", firstVerse.text)
+                    .putLong("last_read_time", System.currentTimeMillis())
+                    .apply()
             }
         }
     }
@@ -288,9 +287,19 @@ fun ChapterScreen(
     }
 
     fun playVerse(verseId: Int) {
-        val allPages = uiState.pages
-        val allVerses = allPages.flatMap { it.verses }.sortedBy { it.id }
-        val verse = allVerses.find { it.id == verseId } ?: return
+        // Optimization: We need verse info. We can find it in allPages or use a global verse lookup if we had one.
+        // For now, we find the page the verse belongs to.
+        // Each surah has a known range of verse IDs. But simplistically, we find it in currently loaded pages or just use verseId.
+        
+        val playingVerse = allPages.values.flatMap { it.verses }.find { it.id == verseId }
+        
+        if (playingVerse == null) {
+            // Verse not loaded! We probably need to find WHICH page it belongs to.
+            // But verseId is consecutive from 1..6236.
+            // We can skip searching if we don't have it loaded yet, 
+            // or just rely on the fact that if it's playing, its page is likely loaded or loading.
+            return 
+        }
 
         activePlayingVerseId = verseId
         isPlaying = false
@@ -361,8 +370,7 @@ fun ChapterScreen(
                     setOnCompletionListener {
                         isPlaying = false
                         val nextVerseId = verseId + 1
-                        val nextVerseExists = allVerses.any { it.id == nextVerseId }
-                        if (nextVerseExists) {
+                        if (nextVerseId <= 6236) {
                             playVerse(nextVerseId)
                         } else {
                             activePlayingVerseId = null
@@ -451,7 +459,7 @@ fun ChapterScreen(
     Scaffold(
         containerColor = bgPageColor
     ) { innerPadding ->
-        if (uiState.pages.isNotEmpty()) {
+        if (uiState.chapters.isNotEmpty()) {
             val quranFont = rememberQcfFontFamily("QCF4_Hafs_01")
             
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -478,8 +486,9 @@ fun ChapterScreen(
                         )
                         
                         // Let's use the first verse's surah name for header
-                        val currentPage = pagerState.currentPage.coerceIn(uiState.pages.indices)
-                        val surahName = uiState.pages[currentPage].verses.firstOrNull()?.surahName ?: ""
+                        val currentPageNumber = pagerState.currentPage + 1
+                        val pageData = allPages[currentPageNumber]
+                        val surahName = pageData?.verses?.firstOrNull()?.surahName ?: ""
                         Text(
                             text = "سورة $surahName",
                             style = MaterialTheme.typography.titleMedium.copy(
@@ -613,9 +622,14 @@ fun ChapterScreen(
                             .weight(1f)
                             .fillMaxWidth()
                     ) { pageIndex ->
-                        val page = uiState.pages[pageIndex]
+                        val pageNumber = pageIndex + 1
+                        val page = allPages[pageNumber]
                         
-                        // Outer border
+                        if (page == null) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = topHeaderColor)
+                            }
+                        } else {
                         BoxWithConstraints(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -631,7 +645,7 @@ fun ChapterScreen(
                             val dynamicLineHeight = with(density) { (maxHeight / totalVisualLines.toFloat()).toSp() } * fontSizeMultiplier
                             val dynamicFontSize = dynamicLineHeight * 0.76f
                             val verseLookup = remember(page.verses) { page.verses.associateBy { it.verseKey } }
-                            val activeVerseKey = uiState.pages
+                            val activeVerseKey = allPages.values
                                 .flatMap { it.verses }
                                 .find { it.id == activePlayingVerseId }
                                 ?.verseKey
@@ -750,11 +764,13 @@ fun ChapterScreen(
                             }
                         }
                     }
-                    }
+                }
+            }
+        }
                     
                     // OUR STICKY BOTTOM PLAYER BAR OVERLAY
                     if (activePlayingVerseId != null) {
-                        val playingVerse = uiState.pages.flatMap { it.verses }.find { it.id == activePlayingVerseId }
+                        val playingVerse = allPages.values.flatMap { it.verses }.find { it.id == activePlayingVerseId }
                         if (playingVerse != null) {
                             Surface(
                                 modifier = Modifier
@@ -784,7 +800,7 @@ fun ChapterScreen(
                                                 color = topHeaderColor
                                             )
                                             Text(
-                                                text = "الآية رقم ${playingVerse.numberInSurah} (الصفحة ${uiState.pages.find { page -> page.verses.any { it.id == playingVerse.id } }?.pageNumber ?: ""})",
+                                                text = "الآية رقم ${playingVerse.numberInSurah} (الصفحة ${playingVerse.pageNumber})",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = textPageColor.copy(alpha = 0.7f)
                                             )
@@ -844,9 +860,8 @@ fun ChapterScreen(
                                         horizontalArrangement = Arrangement.Center,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        val allVerses = uiState.pages.flatMap { it.verses }.sortedBy { it.id }
-                                        val hasPrev = allVerses.any { it.id == activePlayingVerseId!! - 1 }
-                                        val hasNext = allVerses.any { it.id == activePlayingVerseId!! + 1 }
+                                        val hasPrev = activePlayingVerseId!! > 1
+                                        val hasNext = activePlayingVerseId!! < 6236
 
                                         IconButton(
                                             onClick = { playVerse(activePlayingVerseId!! - 1) },

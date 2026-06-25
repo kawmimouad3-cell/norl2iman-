@@ -17,7 +17,6 @@ data class ChapterMetadata(
 
 data class QuranUiState(
     val isLoading: Boolean = true,
-    val pages: List<MushafPage> = emptyList(),
     val chapters: List<ChapterMetadata> = emptyList(),
     val error: String? = null
 )
@@ -43,16 +42,32 @@ class QuranViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            pages = bundle.pages,
                             chapters = bundle.chapters,
                             error = null
                         )
                     }
                 },
                 onFailure = {
-                    _uiState.update { it.copy(isLoading = false, error = "فشل في تحميل القرآن الكريم") }
+                    _uiState.update { it.copy(isLoading = false, error = "فشل في تحميل فهرس القرآن الكريم") }
                 }
             )
+        }
+    }
+
+    suspend fun getPage(pageNumber: Int): Result<MushafPage> {
+        return repository.getPage(pageNumber)
+    }
+
+    private val _allPages = MutableStateFlow<Map<Int, MushafPage>>(emptyMap())
+    val allPages: StateFlow<Map<Int, MushafPage>> = _allPages.asStateFlow()
+
+    fun loadPageIfNeeded(pageNumber: Int) {
+        if (_allPages.value.containsKey(pageNumber)) return
+        
+        viewModelScope.launch {
+            repository.getPage(pageNumber).onSuccess { page ->
+                _allPages.update { it + (pageNumber to page) }
+            }
         }
     }
 

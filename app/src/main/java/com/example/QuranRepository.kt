@@ -59,7 +59,6 @@ class QuranRepository(private val context: Context) {
     private val db = QuranOfflineDatabase.getDatabase(context)
 
     data class QuranBundle(
-        val pages: List<MushafPage>,
         val chapters: List<ChapterMetadata>
     )
 
@@ -183,19 +182,17 @@ class QuranRepository(private val context: Context) {
 
     suspend fun getQuranBundle(): Result<QuranBundle> = withContext(Dispatchers.IO) {
         try {
-            cachedBundle?.let { return@withContext Result.success(it) }
-
             val chapterIndex = loadChapterIndex()
-            val pages = (1..604).map { pageNumber ->
-                parseQcfPage(pageNumber, chapterIndex)
-            }
+            Result.success(QuranBundle(chapters = chapterIndex.chapters))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-            val bundle = QuranBundle(
-                pages = pages,
-                chapters = chapterIndex.chapters
-            )
-            cachedBundle = bundle
-            Result.success(bundle)
+    suspend fun getPage(pageNumber: Int): Result<MushafPage> = withContext(Dispatchers.IO) {
+        try {
+            val chapterIndex = loadChapterIndex()
+            Result.success(parseQcfPage(pageNumber, chapterIndex))
         } catch (e: Exception) {
             Result.failure(e)
         }
