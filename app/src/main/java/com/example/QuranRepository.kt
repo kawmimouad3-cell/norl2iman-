@@ -270,6 +270,8 @@ class QuranRepository(private val context: Context) {
         } catch (e: Exception) {
             null
         }
+    }
+
     suspend fun searchQuran(query: String): List<Verse> = withContext(Dispatchers.IO) {
         val results = mutableListOf<Verse>()
         try {
