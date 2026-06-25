@@ -77,7 +77,25 @@ object OfflineQuranData {
         4 to "Maître du Jour de la rétribution.",
         5 to "C'est Toi [Seul] que nous adorons, et c'est Toi [Seul] dont nous implorons l'assistance.",
         6 to "Guide-nous dans le droit chemin,",
-        7 to "le chemin de ceux que Tu as comblés de faveurs, non pas de ceux qui ont encouru Ta colère, ni des égarés."
+        7 to "le chemin de ceux que Tu as comblés de faveurs, non pas de ceux qui ont encouru Ta colère, ni des égarés.",
+        // Al-Ikhlas (112)
+        6222 to "Dis: «Il est Allah, Unique.",
+        6223 to "Allah, Le Seul à être imploré pour ce que nous désirons.",
+        6224 to "Il n'a jamais engendré, n'a pas été engendré non plus.",
+        6225 to "Et nul n'est égal à Lui».",
+        // Al-Falaq (113)
+        6226 to "Dis: «Je cherche protection auprès du Seigneur de l'aube naissante,",
+        6227 to "contre le mal des êtres qu'Il a créés,",
+        6228 to "contre le mal de l'obscurité quand elle s'approfondit,",
+        6229 to "contre le mal de celles qui soufflent (les sorcières) sur les nœuds,",
+        6230 to "et contre le mal de l'envieux quand il envie».",
+        // An-Naas (114)
+        6231 to "Dis: «Je cherche protection auprès du Seigneur des hommes,",
+        6232 to "Le Souverain des hommes,",
+        6233 to "Dieu des hommes,",
+        6234 to "contre le mal du mauvais conseilleur, furtif,",
+        6235 to "qui souffle le mal dans les poitrines des hommes,",
+        6236 to "qu'il (le conseiller) soit un djinn, ou un être humain»."
     )
 
     val OFFLINE_TRANSLATION_EN = mapOf(
@@ -87,7 +105,25 @@ object OfflineQuranData {
         4 to "Sovereign of the Day of Recompense.",
         5 to "It is You we worship and You we ask for help.",
         6 to "Guide us to the straight path -",
-        7 to "The path of those upon whom You have bestowed favor, not of those who have evoked [Your] anger or of those who are astray."
+        7 to "The path of those upon whom You have bestowed favor, not of those who have evoked [Your] anger or of those who are astray.",
+        // Al-Ikhlas (112)
+        6222 to "Say, \"He is Allah, [who is] One,",
+        6223 to "Allah, the Eternal Refuge.",
+        6224 to "He neither begets nor is born,",
+        6225 to "Nor is there to Him any equivalent.\"",
+        // Al-Falaq (113)
+        6226 to "Say, \"I seek refuge in the Lord of daybreak",
+        6227 to "From the evil of that which He created",
+        6228 to "And from the evil of darkness when it settles",
+        6229 to "And from the evil of the blowers in knots",
+        6230 to "And from the evil of an envier when he envies.\"",
+        // An-Naas (114)
+        6231 to "Say, \"I seek refuge in the Lord of mankind,",
+        6232 to "The Sovereign of mankind.",
+        6233 to "The God of mankind,",
+        6234 to "From the evil of the retreating whisperer -",
+        6235 to "Who whispers [evil] into the breasts of mankind -",
+        6236 to "From among the jinn and mankind.\""
     )
 
     val OFFLINE_TAFSIR_AR = mapOf(
@@ -97,6 +133,24 @@ object OfflineQuranData {
         4 to "مَالِكِ يَوْمِ الدِّينِ: وهو وحده سبحانه المالك الحقيقي ليوم الحساب والجزاء وهو يوم القيامة.",
         5 to "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ: نخصك وحدك بالعبادة والانقياد، ونستعين بك وحدك في جميع أمورنا.",
         6 to "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ: دلّنا وأرشدنا وثبّتنا على الطريق الواضح الموصل إليك وإلى جنتك، وهو الإسلام.",
-        7 to "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ: طريق الذين أنعمت عليهم من النبيين والصديقين والشهداء والصالحين، غير طريق المغضوب عليهم الذين عرفوا الحق ولم يعملوا به كاليهود، وغير الضالين الذين ضلوا عن الحق كالندامى والنصارى."
+        7 to "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ: طريق الذين أنعمت عليهم من النبيين والصديقين والشهداء والصالحين، غير طريق المغضوب عليهم الذين عرفوا الحق ولم يعملوا به كاليهود، وغير الضالين الذين ضلوا عن الحق كالندامى والنصارى.",
+        // Al-Ikhlas (112)
+        6222 to "قُلْ هُوَ اللَّهُ أَحَدٌ: أي قل -أيها الرسول- هو الله المنفرد بالألوهية.",
+        6223 to "اللَّهُ الصَّمَدُ: الذي تصمد إليه الخلائق في حاجاتها.",
+        6224 to "لَمْ يَلِدْ وَلَمْ يُولَدْ: ليس له ولد ولا والد.",
+        6225 to "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ: ولم يكن له مثيل ولا شبيه.",
+        // Al-Falaq (113)
+        6226 to "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ: قل أعوذ وأعتصم برب الصبح.",
+        6227 to "مِن شَرِّ مَا خَلَقَ: من شر جميع المخلوقات.",
+        6228 to "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ: ومن شر ليل شديد الظلمة إذا دخل وتخلل.",
+        6229 to "وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ: ومن شر السواحر اللاتي ينفخن في العقد.",
+        6230 to "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ: ومن شر حاسد إذا حسد الناس على ما آتاهم الله.",
+        // An-Naas (114)
+        6231 to "قُلْ أَعُوذُ بِرَبِّ النَّاسِ: قل أعوذ وأعتصم برب الناس.",
+        6232 to "مَلِكِ النَّاسِ: ملك الناس المتصرف في شؤونهم.",
+        6233 to "إِلَٰهِ النَّاسِ: إله الناس الذي لا معبود بحق سواه.",
+        6234 to "مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ: من شر الشيطان الذي يوسوس عند الغفلة ويختفي عند الذكر.",
+        6235 to "الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ: الذي يبث الشر والشكوك في قلوب الناس.",
+        6236 to "مِنَ الْجِنَّةِ وَالنَّاسِ: سواء كان الموسوس من الجن أو من الإنس."
     )
 }

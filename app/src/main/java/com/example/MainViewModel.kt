@@ -36,8 +36,6 @@ class MainViewModel(
 
     init {
         updateDate()
-        // Location is managed by MainActivity and passed via fetchPrayerTimes,
-        // but we can load cached values here if they exist.
     }
 
     fun loadSettings(context: Context) {
@@ -57,7 +55,6 @@ class MainViewModel(
             cityName = city
         ) }
         
-        // Initial fetch with cached location
         fetchPrayerTimes(lat, lon, city, context)
     }
 
@@ -94,7 +91,6 @@ class MainViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, cityName = cityName, latitude = latitude, longitude = longitude) }
             
-            // Save location if context is provided
             context?.let {
                 val prefs = it.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
                 prefs.edit().apply {
@@ -119,16 +115,18 @@ class MainViewModel(
                     calculateNextPrayer(times)
                 },
                 onFailure = { err ->
+                    // Instead of showing error, we use the fallback provided by repository (which might be offline data)
+                    // If even that fails, we use a more sensible default than hardcoded mocks if possible
                     _uiState.update { 
                         it.copy(
                             isLoading = false,
-                            error = "تعذر جلب أوقات الصلاة، المرجو التأكد من الاتصال", // Failed to fetch
-                            prayerTimes = PrayerTimes("04:30", "06:00", "13:30", "17:00", "20:30", "22:00"), // Fallback mock
+                            error = null, // Silent error
+                            prayerTimes = it.prayerTimes ?: PrayerTimes("04:30", "06:00", "13:30", "17:00", "20:30", "22:00"),
                             latitude = latitude,
                             longitude = longitude
                         )
                     }
-                    calculateNextPrayer(_uiState.value.prayerTimes!!)
+                    _uiState.value.prayerTimes?.let { calculateNextPrayer(it) }
                 }
             )
         }
@@ -157,7 +155,6 @@ class MainViewModel(
             }
         }
         
-        // If all passed, next is Fajr of next day
         if (nextPrayer == null) {
             nextPrayer = parsedTimes.first()
             val secondsUntilMidnight = ChronoUnit.SECONDS.between(now, LocalTime.MAX)

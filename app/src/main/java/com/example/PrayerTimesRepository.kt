@@ -71,7 +71,7 @@ fun distanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
     return 12742 * asin(sqrt(a)) // 2 * R; R = 6371 km
 }
 
-class PrayerTimesRepository {
+class PrayerTimesRepository(private val context: Context? = null) {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -87,22 +87,23 @@ class PrayerTimesRepository {
         try {
             val targetCity = resolveOfficialCity(latitude, longitude, cityName)
             val today = LocalDate.now()
+            val effectiveContext = context ?: this@PrayerTimesRepository.context
 
-            if (context != null) {
+            if (effectiveContext != null) {
                 syncUpcomingMonths(
-                    context = context,
+                    context = effectiveContext,
                     latitude = latitude,
                     longitude = longitude,
                     cityName = cityName,
                     forceRefresh = false
                 )
 
-                PrayerTimesCacheStore.getPrayerTimesForDate(context, today)?.let { cached ->
+                PrayerTimesCacheStore.getPrayerTimesForDate(effectiveContext, today)?.let { cached ->
                     return@withContext Result.success(cached)
                 }
             }
 
-            fetchMonthSchedule(targetCity.id, today.year, today.monthValue)?.get(today.dayOfMonth)?.let {
+            fetchMonthSchedule(targetCity.id, today.year, today.monthValue, effectiveContext)?.get(today.dayOfMonth)?.let {
                 return@withContext Result.success(it)
             }
 
@@ -127,7 +128,7 @@ class PrayerTimesRepository {
             monthsToSync.forEach { monthDate ->
                 val shouldFetch = forceRefresh || !PrayerTimesCacheStore.hasMonthSchedule(context, monthDate.year, monthDate.monthValue)
                 if (shouldFetch) {
-                    val schedule = fetchMonthSchedule(targetCity.id, monthDate.year, monthDate.monthValue)
+                    val schedule = fetchMonthSchedule(targetCity.id, monthDate.year, monthDate.monthValue, context)
                     if (schedule != null && schedule.isNotEmpty()) {
                         PrayerTimesCacheStore.saveMonthSchedule(
                             context = context,
@@ -194,7 +195,8 @@ class PrayerTimesRepository {
         return result
     }
 
-    private fun fetchMonthSchedule(cityId: Int, year: Int, month: Int): Map<Int, PrayerTimes>? {
+    private fun fetchMonthSchedule(cityId: Int, year: Int, month: Int, context: Context?): Map<Int, PrayerTimes>? {
+        // 1. Try Network
         val urls = listOf(
             "https://raw.githubusercontent.com/ZakariaMahmoud/Morocco-Prayer-Times-API/master/$year/$cityId/$month.json",
             "https://www.prayertimes.mahmoud.ma/api/$cityId/$year/$month"
@@ -217,6 +219,38 @@ class PrayerTimesRepository {
             }
         }
 
+        // 2. Fallback to Offline Assets
+        if (context != null) {
+            return loadOfflineSchedule(cityId, year, month, context)
+        }
+
         return null
+    }
+
+    private fun loadOfflineSchedule(cityId: Int, year: Int, month: Int, context: Context): Map<Int, PrayerTimes>? {
+        return try {
+            val json = context.assets.open("prayer_times_offline.json").bufferedReader().use { it.readText() }
+            val root = JSONObject(json)
+            val cityObj = root.optJSONObject(cityId.toString()) ?: return null
+            val yearObj = cityObj.optJSONObject(year.toString()) ?: return null
+            val monthObj = yearObj.optJSONObject(month.toString()) ?: return null
+            
+            val result = mutableMapOf<Int, PrayerTimes>()
+            monthObj.keys().forEach { dayKey ->
+                val day = dayKey.toIntOrNull() ?: return@forEach
+                val dayJson = monthObj.optJSONObject(dayKey) ?: return@forEach
+                result[day] = PrayerTimes(
+                    fajr = dayJson.optString("fajr", "--:--"),
+                    shuruq = dayJson.optString("sunrise", "--:--"),
+                    dhuhr = dayJson.optString("dohr", "--:--"),
+                    asr = dayJson.optString("asr", "--:--"),
+                    maghrib = dayJson.optString("maghreb", "--:--"),
+                    isha = dayJson.optString("ichaa", "--:--")
+                )
+            }
+            result
+        } catch (e: Exception) {
+            null
+        }
     }
 }
