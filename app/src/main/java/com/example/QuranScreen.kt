@@ -606,7 +606,7 @@ fun ChapterScreen(
                                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                                                 border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, borderColor) else null,
                                                 shape = RoundedCornerShape(8.dp),
-                                                modifier = Modifier.height(30.dp)
+                                                modifier = Modifier.height(28.dp)
                                             ) {
                                                 Text(name, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                             }
@@ -634,12 +634,8 @@ fun ChapterScreen(
                         BoxWithConstraints(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
                                 .background(bgPageColor)
-                                .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(4.dp))
-                                .padding(4.dp)
-                                .border(width = 1.dp, color = borderColor.copy(alpha = 0.7f), shape = RoundedCornerShape(2.dp))
-                                .padding(4.dp)
+                        ) {
                         ) {
                             val density = androidx.compose.ui.platform.LocalDensity.current
                             val totalVisualLines = (page.lines.size + 2).coerceAtLeast(10)
@@ -662,10 +658,31 @@ fun ChapterScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .verticalScroll(scrollState)
-                                    .padding(horizontal = 4.dp, vertical = 6.dp),
+                                    .padding(horizontal = 16.dp, vertical = 2.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Top
                             ) {
+                                // Page integrated Header (Juz and Surah Name)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 4.dp, vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val surahName = page.verses.firstOrNull()?.surahName ?: ""
+                                    Text(
+                                        text = "سورة $surahName",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                        color = topHeaderColor.copy(alpha = 0.6f)
+                                    )
+                                    Text(
+                                        text = "الجزء الثالث", // In production, compute Juz from page
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                        color = topHeaderColor.copy(alpha = 0.6f)
+                                    )
+                                }
+
                                 page.lines.forEach { line ->
                                     val isSingleGlyphLine = line.words.size == 1
                                     Row(
@@ -680,10 +697,10 @@ fun ChapterScreen(
                                             val tappedVerse = word.verseKey?.let { verseLookup[it] }
                                             val isActiveWord = word.verseKey != null && word.verseKey == activeVerseKey
                                             val fontSize = when (word.type) {
-                                                "surah_header" -> dynamicFontSize * 1.18f
-                                                "bismillah" -> dynamicFontSize * 1.06f
-                                                "end" -> dynamicFontSize * 0.98f
-                                                "quarter" -> dynamicFontSize * 1.02f
+                                                "surah_header" -> dynamicFontSize * 1.25f
+                                                "bismillah" -> dynamicFontSize * 1.15f
+                                                "end" -> dynamicFontSize * 1.05f
+                                                "quarter" -> dynamicFontSize * 1.10f
                                                 else -> dynamicFontSize
                                             }
 
@@ -758,6 +775,24 @@ fun ChapterScreen(
                                         }
                                     }
                                 }
+                                
+                                // Integrated Footer for Page Number
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .width(120.dp)
+                                        .height(30.dp)
+                                        .background(topHeaderColor.copy(alpha = 0.05f), RoundedCornerShape(15.dp))
+                                        .border(0.5.dp, borderColor.copy(alpha = 0.3f), RoundedCornerShape(15.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = page.pageNumber.toArabicNumber(),
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = topHeaderColor
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
 
                                 if (activePlayingVerseId != null) {
                                     Spacer(modifier = Modifier.height(110.dp))
